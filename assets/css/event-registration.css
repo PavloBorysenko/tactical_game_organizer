@@ -1,0 +1,147 @@
+.tgo-form {
+    max-width: 600px;
+    margin: 20px 0;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.tgo-form-field {
+    margin-bottom: 15px;
+}
+
+.tgo-form-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.tgo-form-field input,
+.tgo-form-field select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.tgo-button {
+    display: inline-block;
+    padding: 10px 20px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.tgo-button:hover {
+    background: #0056b3;
+}
+
+.tgo-button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.tgo-button-cancel {
+    background: #dc3545;
+}
+
+.tgo-button-cancel:hover {
+    background: #c82333;
+}
+
+#tgo-registration-message {
+    margin: 15px 0;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+#tgo-registration-message.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+#tgo-registration-message.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+#tgo-registration-message.info {
+    background: #e2e3e5;
+    color: #383d41;
+    border: 1px solid #d6d8db;
+}
+
+.tgo-participant-list {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+}
+
+.tgo-participant {
+    margin-bottom: 10px;
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.tgo-participant:hover {
+    background: #f8f9fa;
+}
+
+.tgo-event-content {
+    margin-bottom: 30px;
+}
+
+.tgo-cancel-registration {
+    background: none;
+    border: none;
+    color: #dc3545;
+    cursor: pointer;
+    padding: 4px 8px;
+    font-size: 16px;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+.tgo-cancel-registration:hover {
+    opacity: 1;
+}
+
+.tgo-cancel-registration:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.tgo-progress-bar {
+    width: 100%;
+    height: 10px;
+    background-color: #f0f0f0;
+    border-radius: 5px;
+    margin: 10px 0;
+    overflow: hidden;
+}
+
+.tgo-progress {
+    height: 100%;
+    background-color: #007bff;
+    transition: width 0.3s ease;
+}
+
+.tgo-progress-bar.full .tgo-progress {
+    background-color: #dc3545;
+}
+
+.tgo-event-full-text {
+    color: #dc3545;
+    font-size: 0.9em;
+    font-style: italic;
+    margin-left: 10px;
+}

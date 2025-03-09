@@ -2,144 +2,357 @@
 
 namespace TacticalGameOrganizer\Users;
 
+use TacticalGameOrganizer\Users\UserFields;
+use TacticalGameOrganizer\Users\Roles;
+use TacticalGameOrganizer\PostTypes\Event;
+use WP_REST_Server;
+use WP_REST_Request;
+use WP_REST_Response;
+use WP_Error;
+
 /**
  * Class EventRegistration
- * Manages user registration for events
+ * Handles event registration functionality
  */
 class EventRegistration {
-
     /**
      * Initialize hooks
      */
     public function init(): void {
-        \add_action('init', [$this, 'registerMetaFields']);
-        \add_action('tgo_event_registration_form', [$this, 'addRegistrationFields']);
-        \add_action('tgo_process_event_registration', [$this, 'processRegistration'], 10, 2);
+        // Add form to event content
+        \add_filter('the_content', [$this, 'addRegistrationForm']);
+        
+        // Register REST API endpoints
+        \add_action('rest_api_init', [$this, 'registerRestRoutes']);
     }
 
     /**
-     * Register meta fields for event registration
+     * Register REST API routes
      */
-    public function registerMetaFields(): void {
-        \register_meta('user', 'event_role', [
-            'type' => 'string',
-            'description' => \esc_html__('Role for specific event', 'tactical-game-organizer'),
-            'single' => true,
-            'show_in_rest' => true,
-        ]);
+    public function registerRestRoutes(): void {
+        \register_rest_route(
+            'tactical-game-organizer/v1',
+            '/events/(?P<event_id>\d+)/participants',
+            [
+                'methods' => WP_REST_Server::READABLE,
+                'callback' => [$this, 'getParticipants'],
+                'permission_callback' => '__return_true',
+                'args' => [
+                    'event_id' => [
+                        'required' => true,
+                        'validate_callback' => function($param) {
+                            return \is_numeric($param) && \get_post_type($param) === Event::POST_TYPE;
+                        }
+                    ]
+                ]
+            ]
+        );
 
-        \register_meta('user', 'event_team', [
-            'type' => 'string',
-            'description' => \esc_html__('Team for specific event', 'tactical-game-organizer'),
-            'single' => true,
-            'show_in_rest' => true,
-        ]);
+        \register_rest_route(
+            'tactical-game-organizer/v1',
+            '/events/(?P<event_id>\d+)/register',
+            [
+                'methods' => WP_REST_Server::CREATABLE,
+                'callback' => [$this, 'handleRegistration'],
+                'permission_callback' => [$this, 'checkPermissions'],
+                'args' => [
+                    'event_id' => [
+                        'required' => true,
+                        'validate_callback' => function($param) {
+                            return \is_numeric($param) && \get_post_type($param) === Event::POST_TYPE;
+                        }
+                    ],
+                    'callsign' => [
+                        'required' => true,
+                        'sanitize_callback' => 'sanitize_text_field'
+                    ],
+                    'role' => [
+                        'required' => true,
+                        'sanitize_callback' => 'sanitize_text_field',
+                        'validate_callback' => function($param) {
+                            return \array_key_exists($param, Roles::getPlayerTypes());
+                        }
+                    ],
+                    'team' => [
+                        'required' => true,
+                        'sanitize_callback' => 'sanitize_text_field'
+                    ]
+                ]
+            ]
+        );
+
+        \register_rest_route(
+            'tactical-game-organizer/v1',
+            '/events/(?P<event_id>\d+)/cancel',
+            [
+                'methods' => WP_REST_Server::DELETABLE,
+                'callback' => [$this, 'handleCancellation'],
+                'permission_callback' => [$this, 'checkPermissions'],
+                'args' => [
+                    'event_id' => [
+                        'required' => true,
+                        'validate_callback' => function($param) {
+                            return \is_numeric($param) && \get_post_type($param) === Event::POST_TYPE;
+                        }
+                    ]
+                ]
+            ]
+        );
     }
 
     /**
-     * Add registration fields to event form
+     * Get participants list
+     *
+     * @param WP_REST_Request $request Request object
+     * @return WP_REST_Response|WP_Error
+     */
+    public function getParticipants(WP_REST_Request $request) {
+        $event_id = $request->get_param('event_id');
+        $participants = \get_post_meta($event_id, 'participants', true) ?: [];
+        $current_user_id = \get_current_user_id();
+        $max_participants = \get_post_meta($event_id, 'max_participants', true) ?: 0;
+        
+        $participants_data = [];
+        foreach ($participants as $user_id) {
+            $callsign = UserFields::getLastCallsign($user_id);
+            $role = UserFields::getLastRole($user_id);
+            $team = UserFields::getLastTeam($user_id);
+            
+            $role_label = Roles::getPlayerTypes()[$role] ?? $role;
+            
+            $participants_data[] = [
+                'user_id' => $user_id,
+                'callsign' => $callsign,
+                'role' => $role,
+                'role_label' => $role_label,
+                'team' => $team,
+                'can_cancel' => $user_id === $current_user_id && \is_user_logged_in()
+            ];
+        }
+
+        return new WP_REST_Response([
+            'participants' => $participants_data,
+            'max_participants' => (int)$max_participants,
+            'current_count' => count($participants),
+            'has_available_slots' => $max_participants === 0 || count($participants) < $max_participants
+        ], 200);
+    }
+
+    /**
+     * Check if user has permission to register/cancel
+     *
+     * @param WP_REST_Request $request Request object
+     * @return bool|WP_Error
+     */
+    public function checkPermissions(WP_REST_Request $request) {
+        if (!\is_user_logged_in()) {
+            return new WP_Error(
+                'rest_forbidden',
+                \esc_html__('You must be logged in to register for events.', 'tactical-game-organizer'),
+                ['status' => 401]
+            );
+        }
+
+        $user = \wp_get_current_user();
+        if (!\in_array('tgo_player', (array) $user->roles)) {
+            return new WP_Error(
+                'rest_forbidden',
+                \esc_html__('Only players can register for events.', 'tactical-game-organizer'),
+                ['status' => 403]
+            );
+        }
+
+        return true;
+    }
+
+    /**
+     * Handle event registration
+     *
+     * @param WP_REST_Request $request Request object
+     * @return WP_REST_Response|WP_Error
+     */
+    public function handleRegistration(WP_REST_Request $request) {
+        $event_id = $request->get_param('event_id');
+        $callsign = $request->get_param('callsign');
+        $role = $request->get_param('role');
+        $team = $request->get_param('team');
+        $user_id = \get_current_user_id();
+
+        // Проверяем количество участников
+        $participants = \get_post_meta($event_id, 'participants', true) ?: [];
+        $max_participants = \get_post_meta($event_id, 'max_participants', true) ?: 0;
+        
+        if ($max_participants > 0 && count($participants) >= $max_participants) {
+            return new WP_Error(
+                'event_full',
+                \esc_html__('This event is full. No more registrations are accepted.', 'tactical-game-organizer'),
+                ['status' => 400]
+            );
+        }
+
+        // Update user meta
+        UserFields::updateLastCallsign($user_id, $callsign);
+        UserFields::updateLastRoleAndTeam($user_id, $role, $team);
+
+        // Add user to participants
+        if (!\in_array($user_id, $participants)) {
+            $participants[] = $user_id;
+            \update_post_meta($event_id, 'participants', $participants);
+        }
+
+        return new WP_REST_Response([
+            'message' => \esc_html__('Successfully registered for the event.', 'tactical-game-organizer')
+        ], 200);
+    }
+
+    /**
+     * Handle registration cancellation
+     *
+     * @param WP_REST_Request $request Request object
+     * @return WP_REST_Response|WP_Error
+     */
+    public function handleCancellation(WP_REST_Request $request) {
+        $event_id = $request->get_param('event_id');
+        $user_id = \get_current_user_id();
+
+        // Remove user from participants
+        $participants = \get_post_meta($event_id, 'participants', true) ?: [];
+        $participants = \array_diff($participants, [$user_id]);
+        \update_post_meta($event_id, 'participants', $participants);
+
+        return new WP_REST_Response([
+            'message' => \esc_html__('Successfully cancelled registration.', 'tactical-game-organizer')
+        ], 200);
+    }
+
+    /**
+     * Add registration form to event content
+     *
+     * @param string $content Post content
+     * @return string
+     */
+    public function addRegistrationForm(string $content): string {
+        // Only add form to event post type
+        if (!\is_singular(Event::POST_TYPE)) {
+            return $content;
+        }
+
+        // Start output buffering
+        \ob_start();
+
+        // Display original content
+        echo '<div class="tgo-event-content">';
+        echo $content;
+        echo '</div>';
+
+        // Get event data
+        $event_id = \get_the_ID();
+        $participants = \get_post_meta($event_id, 'participants', true) ?: [];
+        $max_participants = \get_post_meta($event_id, 'max_participants', true) ?: 0;
+        $user_id = \get_current_user_id();
+        
+        echo '<div class="tgo-event-registration-container">';
+
+        // Check if user can register
+        if (!\is_user_logged_in()) {
+            $this->renderParticipantList($event_id);
+            echo '<div class="tgo-form-container">';
+            echo \esc_html__('Please log in to register for events.', 'tactical-game-organizer');
+            echo '</div>';
+            echo '</div>';
+            return \ob_get_clean();
+        }
+
+        $user = \wp_get_current_user();
+        if (!\in_array('tgo_player', (array) $user->roles)) {
+            $this->renderParticipantList($event_id);
+            echo '<div class="tgo-form-container">';
+            echo \esc_html__('Only players can register for events.', 'tactical-game-organizer');
+            echo '</div>';
+            echo '</div>';
+            return \ob_get_clean();
+        }
+
+        // Сначала показываем список участников
+        $this->renderParticipantList($event_id);
+
+        // Показываем форму регистрации только если:
+        // 1. Пользователь еще не зарегистрирован
+        // 2. Есть свободные места (max_participants = 0 означает без ограничений)
+        if (!\in_array($user_id, $participants) && 
+            ($max_participants === 0 || count($participants) < $max_participants)) {
+            $this->renderRegistrationForm($event_id);
+        } elseif ($max_participants > 0 && count($participants) >= $max_participants && !\in_array($user_id, $participants)) {
+            echo '<div class="tgo-form-container">';
+            echo \esc_html__('This event is full. No more registrations are accepted.', 'tactical-game-organizer');
+            echo '</div>';
+        }
+
+        echo '</div>';
+
+        // Return buffered content
+        return \ob_get_clean();
+    }
+
+    /**
+     * Render the registration form
      *
      * @param int $event_id Event ID
      */
-    public function addRegistrationFields(int $event_id): void {
+    private function renderRegistrationForm(int $event_id): void {
         $user_id = \get_current_user_id();
+        $last_callsign = UserFields::getLastCallsign($user_id);
         $last_role = UserFields::getLastRole($user_id);
         $last_team = UserFields::getLastTeam($user_id);
-        $available_roles = $this->getAvailableRoles($event_id);
         ?>
-        <div class="event-registration-fields">
-            <p>
-                <label for="event_role">
-                    <?php \esc_html_e('Role', 'tactical-game-organizer'); ?><br/>
-                    <select name="event_role" id="event_role" required>
-                        <option value=""><?php \esc_html_e('Select Role', 'tactical-game-organizer'); ?></option>
-                        <?php foreach ($available_roles as $role_key => $role_name) : ?>
-                            <option value="<?php echo \esc_attr($role_key); ?>" 
-                                    <?php \selected($last_role, $role_key); ?>>
-                                <?php echo $role_name; // role_name уже экранирован через esc_html__ ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </label>
-            </p>
-            <p>
-                <label for="event_team">
-                    <?php \esc_html_e('Team', 'tactical-game-organizer'); ?><br/>
-                    <input type="text" 
-                           name="event_team" 
-                           id="event_team" 
-                           value="<?php echo \esc_attr($last_team); ?>" 
-                           required 
-                    />
-                </label>
-            </p>
-        </div>
+        <form id="tgo-event-registration" class="tgo-form">
+            <input type="hidden" name="event_id" value="<?php echo \esc_attr($event_id); ?>">
+
+            <div class="tgo-form-field">
+                <label for="callsign"><?php \esc_html_e('Callsign', 'tactical-game-organizer'); ?></label>
+                <input type="text" 
+                       id="callsign" 
+                       name="callsign" 
+                       value="<?php echo \esc_attr($last_callsign); ?>" 
+                       required>
+            </div>
+
+            <div class="tgo-form-field">
+                <label for="role"><?php \esc_html_e('Player Role', 'tactical-game-organizer'); ?></label>
+                <select id="role" name="role" required>
+                    <?php foreach (Roles::getPlayerTypes() as $type => $label) : ?>
+                        <option value="<?php echo \esc_attr($type); ?>" 
+                                <?php \selected($last_role ?: 'assault', $type); ?>>
+                            <?php echo $label; ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="tgo-form-field">
+                <label for="team"><?php \esc_html_e('Team', 'tactical-game-organizer'); ?></label>
+                <input type="text" 
+                       id="team" 
+                       name="team" 
+                       value="<?php echo \esc_attr($last_team ?: \esc_html__('No Team', 'tactical-game-organizer')); ?>" 
+                       required>
+            </div>
+
+            <button type="submit" class="tgo-button">
+                <?php \esc_html_e('Register for Event', 'tactical-game-organizer'); ?>
+            </button>
+        </form>
+
+        <div id="tgo-registration-message" style="display: none;"></div>
         <?php
     }
 
     /**
-     * Process event registration
+     * Render the participant list
      *
      * @param int $event_id Event ID
-     * @param int $user_id User ID
      */
-    public function processRegistration(int $event_id, int $user_id): void {
-        if (!isset($_POST['event_role'], $_POST['event_team'])) {
-            \wp_die(\esc_html__('Please fill in all required fields.', 'tactical-game-organizer'));
-        }
-
-        $role = \sanitize_text_field($_POST['event_role']);
-        $team = \sanitize_text_field($_POST['event_team']);
-
-        // Validate role
-        if (!array_key_exists($role, $this->getAvailableRoles($event_id))) {
-            \wp_die(\esc_html__('Selected role is not available for this event.', 'tactical-game-organizer'));
-        }
-
-        // Save event-specific data
-        \update_post_meta($event_id, "participant_{$user_id}_role", $role);
-        \update_post_meta($event_id, "participant_{$user_id}_team", $team);
-
-        // Update user's last role and team
-        UserFields::updateLastRoleAndTeam($user_id, $role, $team);
-    }
-
-    /**
-     * Get available roles for event
-     *
-     * @param int $event_id Event ID
-     * @return array
-     */
-    public function getAvailableRoles(int $event_id): array {
-        $roles = UserFields::getRoles();
-        $restricted_roles = \get_post_meta($event_id, 'restricted_roles', true);
-
-        if (!empty($restricted_roles) && is_array($restricted_roles)) {
-            return array_intersect_key($roles, array_flip($restricted_roles));
-        }
-
-        return $roles;
-    }
-
-    /**
-     * Get participant role for event
-     *
-     * @param int $event_id Event ID
-     * @param int $user_id User ID
-     * @return string
-     */
-    public static function getParticipantRole(int $event_id, int $user_id): string {
-        return \get_post_meta($event_id, "participant_{$user_id}_role", true) ?: '';
-    }
-
-    /**
-     * Get participant team for event
-     *
-     * @param int $event_id Event ID
-     * @param int $user_id User ID
-     * @return string
-     */
-    public static function getParticipantTeam(int $event_id, int $user_id): string {
-        return \get_post_meta($event_id, "participant_{$user_id}_team", true) ?: '';
+    private function renderParticipantList(int $event_id): void {
+        echo '<div class="tgo-participant-list" data-event-id="' . \esc_attr($event_id) . '"></div>';
     }
 } 
