@@ -2,6 +2,10 @@
 
 namespace TacticalGameOrganizer\PostTypes;
 
+use function add_action;
+use function register_post_type;
+use function esc_html__;
+
 /**
  * Class Field
  * 
@@ -31,17 +35,17 @@ class Field {
      */
     public function registerPostType(): void {
         $labels = [
-            'name'               => __('Fields', 'tactical-game-organizer'),
-            'singular_name'      => __('Field', 'tactical-game-organizer'),
-            'add_new'           => __('Add New', 'tactical-game-organizer'),
-            'add_new_item'      => __('Add New Field', 'tactical-game-organizer'),
-            'edit_item'         => __('Edit Field', 'tactical-game-organizer'),
-            'new_item'          => __('New Field', 'tactical-game-organizer'),
-            'view_item'         => __('View Field', 'tactical-game-organizer'),
-            'search_items'      => __('Search Fields', 'tactical-game-organizer'),
-            'not_found'         => __('No fields found', 'tactical-game-organizer'),
-            'not_found_in_trash'=> __('No fields found in trash', 'tactical-game-organizer'),
-            'menu_name'         => __('Fields', 'tactical-game-organizer'),
+            'name'               => \esc_html__('Fields', 'tactical-game-organizer'),
+            'singular_name'      => \esc_html__('Field', 'tactical-game-organizer'),
+            'add_new'           => \esc_html__('Add New', 'tactical-game-organizer'),
+            'add_new_item'      => \esc_html__('Add New Field', 'tactical-game-organizer'),
+            'edit_item'         => \esc_html__('Edit Field', 'tactical-game-organizer'),
+            'new_item'          => \esc_html__('New Field', 'tactical-game-organizer'),
+            'view_item'         => \esc_html__('View Field', 'tactical-game-organizer'),
+            'search_items'      => \esc_html__('Search Fields', 'tactical-game-organizer'),
+            'not_found'         => \esc_html__('No fields found', 'tactical-game-organizer'),
+            'not_found_in_trash'=> \esc_html__('No fields found in trash', 'tactical-game-organizer'),
+            'menu_name'         => \esc_html__('Fields', 'tactical-game-organizer'),
         ];
 
         $args = [

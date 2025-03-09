@@ -2,6 +2,10 @@
 
 namespace TacticalGameOrganizer\PostTypes;
 
+use function add_action;
+use function register_post_type;
+use function esc_html__;
+
 /**
  * Class Event
  * 
@@ -31,17 +35,17 @@ class Event {
      */
     public function registerPostType(): void {
         $labels = [
-            'name'               => __('Events', 'tactical-game-organizer'),
-            'singular_name'      => __('Event', 'tactical-game-organizer'),
-            'add_new'           => __('Add New', 'tactical-game-organizer'),
-            'add_new_item'      => __('Add New Event', 'tactical-game-organizer'),
-            'edit_item'         => __('Edit Event', 'tactical-game-organizer'),
-            'new_item'          => __('New Event', 'tactical-game-organizer'),
-            'view_item'         => __('View Event', 'tactical-game-organizer'),
-            'search_items'      => __('Search Events', 'tactical-game-organizer'),
-            'not_found'         => __('No events found', 'tactical-game-organizer'),
-            'not_found_in_trash'=> __('No events found in trash', 'tactical-game-organizer'),
-            'menu_name'         => __('Events', 'tactical-game-organizer'),
+            'name'               => \esc_html__('Events', 'tactical-game-organizer'),
+            'singular_name'      => \esc_html__('Event', 'tactical-game-organizer'),
+            'add_new'           => \esc_html__('Add New', 'tactical-game-organizer'),
+            'add_new_item'      => \esc_html__('Add New Event', 'tactical-game-organizer'),
+            'edit_item'         => \esc_html__('Edit Event', 'tactical-game-organizer'),
+            'new_item'          => \esc_html__('New Event', 'tactical-game-organizer'),
+            'view_item'         => \esc_html__('View Event', 'tactical-game-organizer'),
+            'search_items'      => \esc_html__('Search Events', 'tactical-game-organizer'),
+            'not_found'         => \esc_html__('No events found', 'tactical-game-organizer'),
+            'not_found_in_trash'=> \esc_html__('No events found in trash', 'tactical-game-organizer'),
+            'menu_name'         => \esc_html__('Events', 'tactical-game-organizer'),
         ];
 
         $args = [

@@ -86,10 +86,16 @@ tactical-game-organizer/
 │   │   └── Field.php
 │   └── Meta/
 │       └── EventMeta.php
+├── tests/
+│   ├── Unit/
+│   │   └── PostTypes/
+│   │       └── EventTest.php
+│   └── bootstrap.php
 ├── languages/
 ├── vendor/
 ├── composer.json
 ├── composer.lock
+├── phpunit.xml
 ├── README.md
 └── tactical_game_organizer.php
 ```
@@ -99,16 +105,71 @@ tactical-game-organizer/
 This project follows WordPress Coding Standards and PSR-12. To check your code:
 
 ```bash
+# Run PHP CodeSniffer
 composer run-script phpcs
+
+# Fix coding standards automatically
+composer run-script phpcbf
+```
+
+### Testing
+
+The plugin uses PHPUnit for unit testing and WP_Mock for mocking WordPress functions.
+
+```bash
+# Run all tests
+composer run-script test
+
+# Run tests with coverage report
+composer run-script test:coverage
+```
+
+#### Writing Tests
+
+1. Create a new test class in `tests/Unit` directory
+2. Extend `PHPUnit\Framework\TestCase`
+3. Use WP_Mock for WordPress functions
+4. Follow the naming convention: `*Test.php`
+
+Example test:
+
+```php
+class EventTest extends TestCase {
+    public function setUp(): void {
+        parent::setUp();
+        WP_Mock::setUp();
+    }
+
+    public function tearDown(): void {
+        WP_Mock::tearDown();
+        parent::tearDown();
+    }
+
+    public function testSomething(): void {
+        // Arrange
+        WP_Mock::userFunction('wp_function', [
+            'times' => 1,
+            'return' => 'expected value',
+        ]);
+
+        // Act
+        $result = do_something();
+
+        // Assert
+        $this->assertEquals('expected value', $result);
+    }
+}
 ```
 
 ## Contributing
 
 1. Fork the repository
 2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+3. Write tests for your changes
+4. Ensure all tests pass
+5. Commit your changes
+6. Push to the branch
+7. Create a Pull Request
 
 ## License
 
