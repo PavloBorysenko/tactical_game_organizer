@@ -15,15 +15,15 @@ class UserFields {
      * Initialize hooks
      */
     public function init(): void {
-        // Добавляем поля в профиль пользователя
+        // Add fields to user profile
         \add_action('show_user_profile', [$this, 'addCustomUserFields']);
         \add_action('edit_user_profile', [$this, 'addCustomUserFields']);
         
-        // Сохраняем поля профиля
+        // Save profile fields
         \add_action('personal_options_update', [$this, 'saveCustomUserFields']);
         \add_action('edit_user_profile_update', [$this, 'saveCustomUserFields']);
         
-        // Добавляем поля при регистрации
+        // Add fields during registration
         \add_action('register_form', [$this, 'addRegistrationFields']);
         \add_action('user_register', [$this, 'saveRegistrationFields']);
         \add_filter('registration_errors', [$this, 'validateRegistrationFields'], 10, 3);

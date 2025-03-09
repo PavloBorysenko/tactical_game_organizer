@@ -290,12 +290,12 @@ class EventRegistration {
             return \ob_get_clean();
         }
 
-        // Сначала показываем список участников
+        // First show the list of participants
         $this->renderParticipantList($event_id);
 
-        // Показываем форму регистрации только если:
-        // 1. Пользователь еще не зарегистрирован
-        // 2. Есть свободные места (max_participants = 0 означает без ограничений)
+        // Show registration form only if:
+        // 1. User is not already registered
+        // 2. There are available slots (max_participants = 0 means unlimited)
         if (!\in_array($user_id, $participants) && 
             ($max_participants === 0 || count($participants) < $max_participants)) {
             $this->renderRegistrationForm($event_id);

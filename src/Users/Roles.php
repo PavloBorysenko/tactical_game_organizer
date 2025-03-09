@@ -46,18 +46,18 @@ class Roles {
     public function registerRoles(): void {
         \error_log('Tactical Game Organizer: Registering player role');
         
-        // Добавляем роль игрока с расширенными правами
+        // Add player role with extended permissions
         $result = add_role(
             self::ROLE_PLAYER,
             \esc_html__('Player', 'tactical-game-organizer'),
             [
-                'read' => true,                      // Разрешаем чтение
-                'upload_files' => true,              // Разрешаем загрузку файлов
-                'edit_posts' => true,                // Разрешаем редактирование своих записей
-                'publish_posts' => true,             // Разрешаем публикацию своих записей
-                'edit_published_posts' => true,      // Разрешаем редактирование опубликованных записей
-                'read_private_posts' => true,        // Разрешаем чтение приватных записей
-                'level_0' => true,                   // Базовый уровень доступа
+                'read' => true,                      // Allow reading
+                'upload_files' => true,              // Allow file uploads
+                'edit_posts' => true,                // Allow editing own posts
+                'publish_posts' => true,             // Allow publishing own posts
+                'edit_published_posts' => true,      // Allow editing published posts
+                'read_private_posts' => true,        // Allow reading private posts
+                'level_0' => true,                   // Basic access level
             ]
         );
 
