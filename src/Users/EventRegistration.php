@@ -9,6 +9,7 @@ use WP_REST_Server;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
+use TacticalGameOrganizer\Roles\PlayerRoles;
 
 /**
  * Class EventRegistration
@@ -69,9 +70,7 @@ class EventRegistration {
                     'role' => [
                         'required' => true,
                         'sanitize_callback' => 'sanitize_text_field',
-                        'validate_callback' => function($param) {
-                            return \array_key_exists($param, Roles::getPlayerTypes());
-                        }
+                        'validate_callback' => [PlayerRoles::class, 'isValidRole']
                     ],
                     'team' => [
                         'required' => true,
@@ -112,13 +111,19 @@ class EventRegistration {
         $current_user_id = \get_current_user_id();
         $max_participants = \get_post_meta($event_id, 'max_participants', true) ?: 0;
         
+        // Get allowed roles for the event
+        $allowedRoles = PlayerRoles::getAllowedRolesForEvent($event_id);
+
+        // Get default role for current user
+        $defaultRole = \is_user_logged_in() ? PlayerRoles::getDefaultRoleForUser($current_user_id) : PlayerRoles::DEFAULT_ROLE;
+
         $participants_data = [];
         foreach ($participants as $user_id) {
             $callsign = UserFields::getLastCallsign($user_id);
             $role = UserFields::getLastRole($user_id);
             $team = UserFields::getLastTeam($user_id);
             
-            $role_label = Roles::getPlayerTypes()[$role] ?? $role;
+            $role_label = isset($allowedRoles[$role]) ? $allowedRoles[$role] : $allowedRoles[PlayerRoles::DEFAULT_ROLE];
             
             $participants_data[] = [
                 'user_id' => $user_id,
@@ -134,7 +139,9 @@ class EventRegistration {
             'participants' => $participants_data,
             'max_participants' => (int)$max_participants,
             'current_count' => count($participants),
-            'has_available_slots' => $max_participants === 0 || count($participants) < $max_participants
+            'has_available_slots' => $max_participants === 0 || count($participants) < $max_participants,
+            'allowed_roles' => $allowedRoles,
+            'default_role' => $defaultRole
         ], 200);
     }
 
@@ -178,7 +185,7 @@ class EventRegistration {
         $team = $request->get_param('team');
         $user_id = \get_current_user_id();
 
-        // Проверяем количество участников
+        // Check participants count
         $participants = \get_post_meta($event_id, 'participants', true) ?: [];
         $max_participants = \get_post_meta($event_id, 'max_participants', true) ?: 0;
         
@@ -190,9 +197,19 @@ class EventRegistration {
             );
         }
 
+        // Validate role
+        $allowedRoles = PlayerRoles::getAllowedRolesForEvent($event_id);
+        if (!isset($allowedRoles[$role])) {
+            // If selected role is not allowed, default to assault
+            $role = PlayerRoles::DEFAULT_ROLE;
+        }
+
         // Update user meta
         UserFields::updateLastCallsign($user_id, $callsign);
         UserFields::updateLastRoleAndTeam($user_id, $role, $team);
+
+        // Store the role as user's last used role
+        \update_user_meta($user_id, '_tgo_last_role', $role);
 
         // Add user to participants
         if (!\in_array($user_id, $participants)) {
@@ -304,6 +321,10 @@ class EventRegistration {
         $last_callsign = UserFields::getLastCallsign($user_id);
         $last_role = UserFields::getLastRole($user_id);
         $last_team = UserFields::getLastTeam($user_id);
+        
+        // Get allowed roles for this event
+        $allowedRoles = PlayerRoles::getAllowedRolesForEvent($event_id);
+        $defaultRole = PlayerRoles::getDefaultRoleForUser($user_id);
         ?>
         <form id="tgo-event-registration" class="tgo-form">
             <input type="hidden" name="event_id" value="<?php echo \esc_attr($event_id); ?>">
@@ -320,11 +341,23 @@ class EventRegistration {
             <div class="tgo-form-field">
                 <label for="role"><?php \esc_html_e('Player Role', 'tactical-game-organizer'); ?></label>
                 <select id="role" name="role" required>
-                    <?php foreach (Roles::getPlayerTypes() as $type => $label) : ?>
-                        <option value="<?php echo \esc_attr($type); ?>" 
-                                <?php \selected($last_role ?: 'assault', $type); ?>>
-                            <?php echo $label; ?>
+                    <option value=""><?php \esc_html_e('Select your role', 'tactical-game-organizer'); ?></option>
+                    <?php 
+                    // First add assault if it's available
+                    if (isset($allowedRoles[PlayerRoles::DEFAULT_ROLE])) : ?>
+                        <option value="<?php echo \esc_attr(PlayerRoles::DEFAULT_ROLE); ?>" 
+                                <?php \selected($last_role ?: PlayerRoles::DEFAULT_ROLE, PlayerRoles::DEFAULT_ROLE); ?>>
+                            <?php echo \esc_html($allowedRoles[PlayerRoles::DEFAULT_ROLE]); ?>
                         </option>
+                    <?php endif; ?>
+
+                    <?php foreach ($allowedRoles as $type => $label) : ?>
+                        <?php if ($type !== PlayerRoles::DEFAULT_ROLE) : ?>
+                            <option value="<?php echo \esc_attr($type); ?>" 
+                                    <?php \selected($last_role, $type); ?>>
+                                <?php echo \esc_html($label); ?>
+                            </option>
+                        <?php endif; ?>
                     <?php endforeach; ?>
                 </select>
             </div>

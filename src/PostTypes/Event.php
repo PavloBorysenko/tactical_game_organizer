@@ -12,6 +12,7 @@ use function wp_nonce_field;
 use function sanitize_text_field;
 use function update_post_meta;
 use function absint;
+use TacticalGameOrganizer\Roles\PlayerRoles;
 
 /**
  * Class Event
@@ -95,6 +96,14 @@ class Event {
             'normal',
             'high'
         );
+        add_meta_box(
+            'tgo_event_roles',
+            __('Allowed Roles', 'tactical-game-organizer'),
+            [$this, 'renderRolesMetaBox'],
+            self::POST_TYPE,
+            'normal',
+            'high'
+        );
     }
 
     /**
@@ -144,6 +153,31 @@ class Event {
     }
 
     /**
+     * Render roles meta box
+     */
+    public function renderRolesMetaBox($post): void {
+        wp_nonce_field('tgo_event_roles', 'tgo_event_roles_nonce');
+        
+        $allowedRoles = PlayerRoles::getAllowedRolesForEvent($post->ID);
+        $allRoles = PlayerRoles::getAllRoles();
+        
+        echo '<div class="tgo-roles-select">';
+        echo '<p>' . __('Select roles that will be available for this event:', 'tactical-game-organizer') . '</p>';
+        
+        foreach ($allRoles as $key => $label) {
+            $checked = isset($allowedRoles[$key]) ? 'checked' : '';
+            echo sprintf(
+                '<label><input type="checkbox" name="tgo_allowed_roles[]" value="%s" %s> %s</label><br>',
+                esc_attr($key),
+                $checked,
+                esc_html($label)
+            );
+        }
+        
+        echo '</div>';
+    }
+
+    /**
      * Save event details meta box data
      *
      * @param int $post_id Post ID
@@ -176,6 +210,12 @@ class Event {
                 'max_participants', 
                 absint($_POST['max_participants'])
             );
+        }
+
+        // Save allowed roles
+        if (isset($_POST['tgo_event_roles_nonce']) && wp_verify_nonce($_POST['tgo_event_roles_nonce'], 'tgo_event_roles')) {
+            $allowedRoles = isset($_POST['tgo_allowed_roles']) ? (array) $_POST['tgo_allowed_roles'] : [];
+            PlayerRoles::saveAllowedRolesForEvent($post_id, $allowedRoles);
         }
     }
 } 

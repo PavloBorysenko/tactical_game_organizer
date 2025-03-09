@@ -110,7 +110,8 @@ function tgo_enqueue_scripts(): void {
         'participants_title' => __('Participants', 'tactical-game-organizer'),
         'error_message' => __('An error occurred. Please try again.', 'tactical-game-organizer'),
         'event_full_message' => __('This event is full. No more registrations are accepted.', 'tactical-game-organizer'),
-        'event_full_inline' => __('Unfortunately, there are no more spots available for this game.', 'tactical-game-organizer')
+        'event_full_inline' => __('Unfortunately, there are no more spots available for this game.', 'tactical-game-organizer'),
+        'select_role' => __('Select your role', 'tactical-game-organizer')
     ]);
 }
 

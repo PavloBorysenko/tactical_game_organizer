@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
-    // Function to update the participants list
+    // Function to update the participants list and role selector
     function updateParticipantsList(list) {
         const eventId = list.dataset.eventId;
         if (!eventId) return Promise.reject('No event ID found');
@@ -12,6 +12,48 @@ document.addEventListener('DOMContentLoaded', function () {
                 const participants = response.participants;
                 const maxParticipants = response.max_participants;
                 const currentCount = response.current_count;
+                const allowedRoles = response.allowed_roles || {};
+                const defaultRole = response.default_role || 'assault';
+
+                // Update role selector with allowed roles
+                const roleSelect = document.querySelector(
+                    'select[name="role"]'
+                );
+                if (roleSelect) {
+                    // Clear existing options
+                    roleSelect.innerHTML = '';
+
+                    // Add default option
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = '';
+                    defaultOption.textContent = window.tgo_rest.select_role;
+                    roleSelect.appendChild(defaultOption);
+
+                    // Add allowed roles, ensuring 'assault' is always first
+                    if (allowedRoles['assault']) {
+                        const assaultOption = document.createElement('option');
+                        assaultOption.value = 'assault';
+                        assaultOption.textContent = allowedRoles['assault'];
+                        roleSelect.appendChild(assaultOption);
+                    }
+
+                    // Add other allowed roles
+                    Object.entries(allowedRoles).forEach(([value, label]) => {
+                        if (value !== 'assault') {
+                            const option = document.createElement('option');
+                            option.value = value;
+                            option.textContent = label;
+                            roleSelect.appendChild(option);
+                        }
+                    });
+
+                    // Set default role
+                    if (defaultRole && allowedRoles[defaultRole]) {
+                        roleSelect.value = defaultRole;
+                    } else if (allowedRoles['assault']) {
+                        roleSelect.value = 'assault';
+                    }
+                }
 
                 if (!participants.length) {
                     list.innerHTML =
