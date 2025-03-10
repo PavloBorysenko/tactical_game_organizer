@@ -1,0 +1,488 @@
+:root {
+    /* Основные цвета */
+    --tgo-primary: #4b4634; /* Основной цвет фона */
+    --tgo-primary-light: #5c563f; /* Светлый вариант основного */
+    --tgo-primary-dark: #2d2a1b; /* Темный вариант основного */
+    --tgo-accent: #d5c992; /* Акцентный цвет */
+    --tgo-border: #6b644a; /* Цвет границ */
+
+    /* Статусы */
+    --tgo-success: #626b3a; /* Цвет успеха */
+    --tgo-success-hover: #798347; /* Цвет успеха при наведении */
+    --tgo-error: #a94442; /* Цвет ошибки */
+    --tgo-error-text: #e4b9b9; /* Текст ошибки */
+
+    /* Текст */
+    --tgo-text: #ffffff; /* Основной цвет текста */
+    --tgo-text-muted: #a3a3a3; /* Приглушенный текст */
+}
+
+.entry-header {
+    margin-bottom: 0;
+}
+
+.entry-title {
+    color: var(--tgo-accent);
+    font-size: 32px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    font-family: 'Courier New', monospace;
+    padding: 15px;
+    background: var(--tgo-primary);
+    border: 2px solid var(--tgo-primary-light);
+    border-radius: 5px;
+    margin: 0;
+}
+
+.event-header {
+    position: relative;
+    margin-bottom: 0;
+}
+
+.event-featured-image {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+    border-radius: 5px;
+    border: 2px solid var(--tgo-primary);
+}
+
+.event-badges {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.event-badge {
+    padding: 8px 15px;
+    border-radius: 4px;
+    color: var(--tgo-text);
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: rgba(86, 83, 45, 0.95);
+    border: 2px solid rgba(213, 201, 146, 0.3);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.event-badge i {
+    font-size: 16px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.event-badge.date,
+.event-badge.time {
+    background-color: rgba(86, 83, 45, 0.95);
+    border: 2px solid rgba(213, 201, 146, 0.3);
+}
+
+.event-badge.status {
+    padding: 8px 15px;
+}
+
+.event-badge.status.active {
+    background-color: rgba(98, 107, 58, 0.95);
+    border: 2px solid rgba(213, 201, 146, 0.5);
+}
+
+.event-badge.status.expired {
+    background-color: rgba(94, 85, 73, 0.95);
+    border: 2px solid rgba(169, 169, 169, 0.5);
+    color: #e0e0e0;
+}
+
+.event-content {
+    background: var(--tgo-primary);
+    border: 2px solid var(--tgo-primary-light);
+    padding: 30px;
+    border-radius: 5px;
+    color: var(--tgo-text);
+    margin-top: 0;
+}
+
+.event-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: var(--tgo-primary-light);
+    border: 1px solid var(--tgo-border);
+    border-radius: 3px;
+}
+
+.event-detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.event-detail-label {
+    color: var(--tgo-accent);
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 1px;
+    font-weight: bold;
+}
+
+.event-detail-value {
+    font-size: 16px;
+    color: var(--tgo-text);
+    font-family: 'Courier New', monospace;
+}
+
+@media screen and (max-width: 1024px) {
+    .event-badges {
+        flex-direction: row;
+        flex-wrap: wrap;
+        top: 15px;
+        left: 15px;
+        max-width: calc(100% - 30px);
+    }
+
+    .event-badge {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+
+    .event-badge i {
+        font-size: 14px;
+    }
+}
+
+@media screen and (max-width: 782px) {
+    .event-badges {
+        top: 10px;
+        left: 10px;
+        gap: 8px;
+    }
+
+    .event-badge {
+        font-size: 11px;
+        padding: 5px 10px;
+    }
+
+    .event-badge i {
+        font-size: 13px;
+    }
+}
+
+/* Предупреждающая лента */
+.warning-tape {
+    height: 40px;
+    background: repeating-linear-gradient(
+        45deg,
+        #d5c992,
+        #d5c992 20px,
+        #2d2a1b 20px,
+        #2d2a1b 40px
+    );
+    margin: 30px 0;
+    position: relative;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    border-top: 2px solid rgba(213, 201, 146, 0.5);
+    border-bottom: 2px solid rgba(213, 201, 146, 0.5);
+    z-index: 1;
+}
+
+.warning-tape::before,
+.warning-tape::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 8px;
+    background: #4b4634;
+}
+
+.warning-tape::before {
+    left: 0;
+}
+
+.warning-tape::after {
+    right: 0;
+}
+
+/* Список участников */
+.tgo-participant-list {
+    background: var(--tgo-primary);
+    border: 2px solid var(--tgo-primary-light);
+    padding: 25px;
+    border-radius: 5px;
+    margin-top: 0;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.tgo-participant-list h3 {
+    color: var(--tgo-accent);
+    font-size: 24px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+    font-family: 'Courier New', monospace;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.tgo-participant-list table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+    padding: 0;
+    background: var(--tgo-primary-dark);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.tgo-participant-list th {
+    background: var(--tgo-primary-dark);
+    color: var(--tgo-accent);
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: bold;
+    padding: 15px;
+    text-align: left;
+    border-bottom: 2px solid var(--tgo-border);
+    font-family: 'Courier New', monospace;
+}
+
+.tgo-participant-list td {
+    padding: 12px 15px;
+    color: var(--tgo-text);
+    font-family: 'Courier New', monospace;
+    border-bottom: 1px solid var(--tgo-border);
+    background: var(--tgo-primary);
+}
+
+.tgo-participant-list tr:last-child td {
+    border-bottom: none;
+}
+
+.tgo-participant-list tr:hover td {
+    background: var(--tgo-primary-light);
+}
+
+.tgo-participant {
+    background: transparent;
+    border: none;
+    padding: 0;
+    border-radius: 0;
+    display: table-row;
+    color: var(--tgo-text);
+    font-family: 'Courier New', monospace;
+    font-weight: normal;
+}
+
+.tgo-cancel-registration {
+    background: none;
+    border: none;
+    color: #ff6b6b;
+    cursor: pointer;
+    padding: 5px;
+    font-size: 16px;
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+
+.tgo-cancel-registration:hover {
+    opacity: 1;
+}
+
+.tgo-cancel-registration:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.tgo-progress-bar {
+    margin-top: 20px;
+    background: var(--tgo-primary-light);
+    border: 1px solid var(--tgo-border);
+    border-radius: 3px;
+    height: 20px;
+    overflow: hidden;
+}
+
+.tgo-progress-bar.full .tgo-progress {
+    background-color: var(--tgo-error);
+}
+
+.tgo-progress {
+    height: 100%;
+    background-color: var(--tgo-success);
+    transition: width 0.3s ease;
+}
+
+.tgo-event-full-text {
+    color: var(--tgo-error);
+    font-size: 14px;
+    font-style: italic;
+}
+
+/* Форма регистрации */
+#tgo-event-registration {
+    background: var(--tgo-primary);
+    border: 2px solid var(--tgo-primary-light);
+    padding: 25px;
+    border-radius: 5px;
+    margin-top: 30px;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#tgo-event-registration h3 {
+    color: var(--tgo-accent);
+    font-size: 24px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+    font-family: 'Courier New', monospace;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+#tgo-event-registration form {
+    display: grid;
+    gap: 20px;
+}
+
+.tgo-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tgo-form-group label {
+    color: var(--tgo-accent);
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: bold;
+}
+
+.tgo-form-group input,
+.tgo-form-group select {
+    background: var(--tgo-primary-light);
+    border: 1px solid var(--tgo-border);
+    padding: 12px;
+    border-radius: 4px;
+    color: var(--tgo-text);
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+}
+
+.tgo-form-group input:focus,
+.tgo-form-group select:focus {
+    outline: none;
+    border-color: var(--tgo-accent);
+    box-shadow: 0 0 5px rgba(213, 201, 146, 0.3);
+}
+
+.tgo-form-group select {
+    appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg fill="%23d5c992" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 40px;
+}
+
+#tgo-event-registration button[type='submit'] {
+    background: var(--tgo-success);
+    color: var(--tgo-text);
+    border: 2px solid var(--tgo-accent);
+    padding: 12px 25px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+}
+
+#tgo-event-registration button[type='submit']:hover {
+    background: var(--tgo-success-hover);
+    box-shadow: 0 0 10px rgba(213, 201, 146, 0.3);
+}
+
+#tgo-event-registration button[type='submit']:disabled {
+    background: var(--tgo-primary-light);
+    border-color: var(--tgo-border);
+    color: var(--tgo-text-muted);
+    cursor: not-allowed;
+}
+
+#tgo-registration-message {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+}
+
+#tgo-registration-message.success {
+    background: rgba(98, 107, 58, 0.2);
+    border: 1px solid var(--tgo-success);
+    color: var(--tgo-accent);
+}
+
+#tgo-registration-message.error {
+    background: rgba(169, 68, 66, 0.2);
+    border: 1px solid var(--tgo-error);
+    color: var(--tgo-error-text);
+}
+
+#tgo-registration-message.info {
+    background: rgba(70, 84, 128, 0.2);
+    border: 1px solid #465480;
+    color: #d5c992;
+}
+
+@media screen and (max-width: 782px) {
+    .tgo-participant-list {
+        padding: 15px;
+    }
+
+    .tgo-participant-list table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .tgo-participant-list th,
+    .tgo-participant-list td {
+        padding: 10px;
+        font-size: 13px;
+    }
+
+    #tgo-event-registration form {
+        gap: 15px;
+    }
+
+    .tgo-form-group input,
+    .tgo-form-group select {
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    #tgo-event-registration button[type='submit'] {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+}

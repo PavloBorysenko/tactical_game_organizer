@@ -4,6 +4,7 @@ namespace TacticalGameOrganizer\Users;
 
 use WP_User;
 use WP_Error;
+use TacticalGameOrganizer\Roles\PlayerRoles;
 
 /**
  * Class UserFields
@@ -74,7 +75,7 @@ class UserFields {
                 <td>
                     <select name="player_type" id="player_type" required>
                         <option value=""><?php \esc_html_e('Select Player Type', 'tactical-game-organizer'); ?></option>
-                        <?php foreach (Roles::getPlayerTypes() as $type => $label) : ?>
+                        <?php foreach (PlayerRoles::getAllRoles() as $type => $label) : ?>
                             <option value="<?php echo \esc_attr($type); ?>" 
                                     <?php \selected($player_type, $type); ?>>
                                 <?php echo $label; ?>
@@ -121,7 +122,7 @@ class UserFields {
                 <?php \esc_html_e('Player Type', 'tactical-game-organizer'); ?><br/>
                 <select name="player_type" id="player_type" class="input" required>
                     <option value=""><?php \esc_html_e('Select Player Type', 'tactical-game-organizer'); ?></option>
-                    <?php foreach (Roles::getPlayerTypes() as $type => $label) : ?>
+                    <?php foreach (PlayerRoles::getAllRoles() as $type => $label) : ?>
                         <option value="<?php echo \esc_attr($type); ?>" 
                                 <?php \selected($_POST['player_type'] ?? '', $type); ?>>
                             <?php echo $label; ?>
@@ -166,7 +167,7 @@ class UserFields {
 
         // Устанавливаем роль игрока
         $user = new \WP_User($user_id);
-        $user->set_role(Roles::ROLE_PLAYER);
+        $user->set_role(PlayerRoles::ROLE_PLAYER);
     }
 
     /**
@@ -186,7 +187,7 @@ class UserFields {
         }
         if (empty($_POST['player_type'])) {
             $errors->add('player_type_error', \esc_html__('Please select your player type.', 'tactical-game-organizer'));
-        } elseif (!array_key_exists($_POST['player_type'], Roles::getPlayerTypes())) {
+        } elseif (!PlayerRoles::isValidRole($_POST['player_type'])) {
             $errors->add('player_type_error', \esc_html__('Invalid player type selected.', 'tactical-game-organizer'));
         }
         return $errors;

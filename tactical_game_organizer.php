@@ -12,6 +12,8 @@
  * Requires PHP: 7.4
  */
 
+declare(strict_types=1);
+
 // Prevent direct access
 if (!defined('ABSPATH')) {
     exit;
@@ -24,12 +26,8 @@ require_once(ABSPATH . 'wp-admin/includes/plugin.php');
 // Enable error reporting for debugging
 if (!defined('WP_DEBUG')) {
     define('WP_DEBUG', true);
-}
-if (!defined('WP_DEBUG_LOG')) {
     define('WP_DEBUG_LOG', true);
-}
-if (!defined('WP_DEBUG_DISPLAY')) {
-    define('WP_DEBUG_DISPLAY', true);
+    define('WP_DEBUG_DISPLAY', false);
 }
 
 // Plugin constants
@@ -47,9 +45,25 @@ if (file_exists(__DIR__ . '/vendor/autoload.php')) {
 
 use TacticalGameOrganizer\PostTypes\Event;
 use TacticalGameOrganizer\PostTypes\Field;
-use TacticalGameOrganizer\Users\Roles;
+use TacticalGameOrganizer\Roles\PlayerRoles;
 use TacticalGameOrganizer\Users\UserFields;
 use TacticalGameOrganizer\Users\EventRegistration;
+use function add_action;
+use function register_activation_hook;
+use function register_deactivation_hook;
+use function wp_enqueue_style;
+use function wp_enqueue_script;
+use function plugins_url;
+use function plugin_dir_path;
+use function plugin_dir_url;
+use function wp_localize_script;
+use function esc_html__;
+use function update_option;
+use function get_option;
+use function delete_option;
+use function is_admin;
+use function flush_rewrite_rules;
+use function error_log;
 
 /**
  * Initialize plugin
@@ -57,7 +71,7 @@ use TacticalGameOrganizer\Users\EventRegistration;
 function tgo_init(): void {
     try {
         // Initialize roles
-        $roles = new Roles();
+        $roles = new PlayerRoles();
         $roles->init();
         error_log('Tactical Game Organizer: Roles initialized');
 
@@ -68,6 +82,7 @@ function tgo_init(): void {
 
         // Initialize post types
         $event = new Event();
+        $field = new Field();
         error_log('Tactical Game Organizer: Post types initialized');
 
         // Initialize event registration
@@ -77,6 +92,7 @@ function tgo_init(): void {
 
         // Enqueue scripts and styles
         add_action('wp_enqueue_scripts', 'tgo_enqueue_scripts');
+        add_action('admin_enqueue_scripts', 'tgo_enqueue_scripts');
     } catch (\Exception $e) {
         error_log('Tactical Game Organizer Error: ' . $e->getMessage());
     }
@@ -87,6 +103,8 @@ add_action('plugins_loaded', 'tgo_init');
  * Enqueue scripts and styles
  */
 function tgo_enqueue_scripts(): void {
+    global $post;
+
     // Styles
     wp_enqueue_style(
         'tgo-event-registration',
@@ -106,13 +124,34 @@ function tgo_enqueue_scripts(): void {
     );
 
     wp_localize_script('tgo-event-registration', 'tgo_rest', [
-        'no_participants' => __('No participants yet.', 'tactical-game-organizer'),
-        'participants_title' => __('Participants', 'tactical-game-organizer'),
-        'error_message' => __('An error occurred. Please try again.', 'tactical-game-organizer'),
-        'event_full_message' => __('This event is full. No more registrations are accepted.', 'tactical-game-organizer'),
-        'event_full_inline' => __('Unfortunately, there are no more spots available for this game.', 'tactical-game-organizer'),
-        'select_role' => __('Select your role', 'tactical-game-organizer')
+        'no_participants' => esc_html__('No participants yet.', 'tactical-game-organizer'),
+        'participants_title' => esc_html__('Participants', 'tactical-game-organizer'),
+        'error_message' => esc_html__('An error occurred. Please try again.', 'tactical-game-organizer'),
+        'event_full_message' => esc_html__('This event is full. No more registrations are accepted.', 'tactical-game-organizer'),
+        'event_full_inline' => esc_html__('Unfortunately, there are no more spots available for this game.', 'tactical-game-organizer'),
+        'select_role' => esc_html__('Select your role', 'tactical-game-organizer')
     ]);
+
+    // Admin styles
+    if (is_admin()) {
+        wp_enqueue_style(
+            'tgo-admin-style',
+            plugins_url('assets/css/admin.css', __FILE__),
+            [],
+            '1.0.0'
+        );
+    }
+
+    // Frontend styles for event
+    if ($post && $post->post_type === Event::POST_TYPE) {
+        wp_enqueue_style(
+            'tgo-event-style',
+            plugins_url('assets/css/event.css', __FILE__),
+            [],
+            '1.0.0'
+        );
+        wp_enqueue_style('dashicons');
+    }
 }
 
 /**
@@ -121,7 +160,7 @@ function tgo_enqueue_scripts(): void {
 function tgo_activate(): void {
     try {
         // Initialize and register roles
-        $roles = new Roles();
+        $roles = new PlayerRoles();
         $roles->registerRoles();
         error_log('Tactical Game Organizer: Roles registered on activation');
 
@@ -140,7 +179,7 @@ register_activation_hook(__FILE__, 'tgo_activate');
 function tgo_deactivate(): void {
     try {
         // Remove custom roles
-        Roles::removeRoles();
+        PlayerRoles::removeRoles();
         error_log('Tactical Game Organizer: Roles removed on deactivation');
 
         // Set flag to flush rewrite rules on next admin load

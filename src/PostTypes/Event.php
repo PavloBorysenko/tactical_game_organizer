@@ -1,18 +1,33 @@
 <?php
 
+declare(strict_types=1);
+
 namespace TacticalGameOrganizer\PostTypes;
 
+use TacticalGameOrganizer\Core\Template;
+use TacticalGameOrganizer\Roles\PlayerRoles;
+use WP_Post;
+
+// WordPress Core Functions
 use function add_action;
-use function register_post_type;
+use function add_filter;
+use function add_meta_box;
+use function current_user_can;
 use function esc_html__;
 use function esc_html_x;
-use function add_meta_box;
+use function file_exists;
 use function get_post_meta;
-use function wp_nonce_field;
+use function get_posts;
+use function is_singular;
+use function plugin_dir_path;
+use function register_post_type;
 use function sanitize_text_field;
 use function update_post_meta;
-use function absint;
-use TacticalGameOrganizer\Roles\PlayerRoles;
+use function wp_nonce_field;
+use function wp_verify_nonce;
+
+// WordPress Constants
+use const DOING_AUTOSAVE;
 
 /**
  * Class Event
@@ -21,7 +36,7 @@ use TacticalGameOrganizer\Roles\PlayerRoles;
  * 
  * @package TacticalGameOrganizer\PostTypes
  */
-class Event {
+class Event extends Template {
     /**
      * Post type name
      *
@@ -36,6 +51,7 @@ class Event {
         add_action('init', [$this, 'registerPostType']);
         add_action('add_meta_boxes', [$this, 'addMetaBoxes']);
         add_action('save_post_' . self::POST_TYPE, [$this, 'saveMetaBoxes']);
+        add_filter('single_template', [$this, 'loadSingleTemplate']);
     }
 
     /**
@@ -86,6 +102,8 @@ class Event {
 
     /**
      * Add meta boxes for event details
+     *
+     * @return void
      */
     public function addMetaBoxes(): void {
         add_meta_box(
@@ -98,7 +116,7 @@ class Event {
         );
         add_meta_box(
             'tgo_event_roles',
-            __('Allowed Roles', 'tactical-game-organizer'),
+            esc_html__('Allowed Roles', 'tactical-game-organizer'),
             [$this, 'renderRolesMetaBox'],
             self::POST_TYPE,
             'normal',
@@ -109,78 +127,47 @@ class Event {
     /**
      * Render event details meta box
      *
-     * @param \WP_Post $post Post object
+     * @param WP_Post $post Post object
+     * @return void
      */
-    public function renderEventDetailsMetaBox(\WP_Post $post): void {
-        $event_date = get_post_meta($post->ID, 'event_date', true);
-        $event_location = get_post_meta($post->ID, 'event_location', true);
-        $max_participants = get_post_meta($post->ID, 'max_participants', true);
-        
+    public function renderEventDetailsMetaBox(WP_Post $post): void {
         wp_nonce_field('event_details', 'event_details_nonce');
-        ?>
-        <p>
-            <label for="event_date">
-                <?php esc_html_e('Event Date', 'tactical-game-organizer'); ?>
-            </label><br>
-            <input type="date" 
-                   id="event_date" 
-                   name="event_date" 
-                   value="<?php echo esc_attr($event_date); ?>" 
-                   class="widefat">
-        </p>
-        <p>
-            <label for="event_location">
-                <?php esc_html_e('Location', 'tactical-game-organizer'); ?>
-            </label><br>
-            <input type="text" 
-                   id="event_location" 
-                   name="event_location" 
-                   value="<?php echo esc_attr($event_location); ?>" 
-                   class="widefat">
-        </p>
-        <p>
-            <label for="max_participants">
-                <?php esc_html_e('Maximum Participants', 'tactical-game-organizer'); ?>
-            </label><br>
-            <input type="number" 
-                   id="max_participants" 
-                   name="max_participants" 
-                   value="<?php echo esc_attr($max_participants); ?>" 
-                   min="0" 
-                   class="widefat">
-        </p>
-        <?php
+
+        $data = [
+            'event_date' => get_post_meta($post->ID, 'tgo_event_date', true),
+            'event_field' => get_post_meta($post->ID, 'tgo_event_field', true),
+            'max_participants' => get_post_meta($post->ID, 'tgo_event_max_participants', true),
+            'fields' => get_posts([
+                'post_type' => Field::POST_TYPE,
+                'posts_per_page' => -1,
+            ]),
+        ];
+
+        $this->renderTemplate('meta-boxes/event-meta.php', $data);
     }
 
     /**
      * Render roles meta box
+     *
+     * @param WP_Post $post Post object
+     * @return void
      */
-    public function renderRolesMetaBox($post): void {
+    public function renderRolesMetaBox(WP_Post $post): void {
         wp_nonce_field('tgo_event_roles', 'tgo_event_roles_nonce');
         
-        $allowedRoles = PlayerRoles::getAllowedRolesForEvent($post->ID);
-        $allRoles = PlayerRoles::getAllRoles();
-        
-        echo '<div class="tgo-roles-select">';
-        echo '<p>' . __('Select roles that will be available for this event:', 'tactical-game-organizer') . '</p>';
-        
-        foreach ($allRoles as $key => $label) {
-            $checked = isset($allowedRoles[$key]) ? 'checked' : '';
-            echo sprintf(
-                '<label><input type="checkbox" name="tgo_allowed_roles[]" value="%s" %s> %s</label><br>',
-                esc_attr($key),
-                $checked,
-                esc_html($label)
-            );
-        }
-        
-        echo '</div>';
+        $data = [
+            'allowedRoles' => PlayerRoles::getAllowedRolesForEvent($post->ID),
+            'allRoles' => PlayerRoles::getAllRoles(),
+        ];
+
+        $this->renderTemplate('meta-boxes/event-roles.php', $data);
     }
 
     /**
-     * Save event details meta box data
+     * Save meta box data
      *
      * @param int $post_id Post ID
+     * @return void
      */
     public function saveMetaBoxes(int $post_id): void {
         if (!isset($_POST['event_details_nonce']) || 
@@ -196,19 +183,32 @@ class Event {
             return;
         }
 
-        if (isset($_POST['event_date'])) {
-            update_post_meta($post_id, 'event_date', sanitize_text_field($_POST['event_date']));
-        }
+        // Combine date and time into a single datetime string
+        if (isset($_POST['tgo_event_date']) && isset($_POST['tgo_event_time'])) {
+            $date = sanitize_text_field($_POST['tgo_event_date']);
+            $time = sanitize_text_field($_POST['tgo_event_time']);
+            $datetime = sprintf('%s %s:00', $date, $time);
 
-        if (isset($_POST['event_location'])) {
-            update_post_meta($post_id, 'event_location', sanitize_text_field($_POST['event_location']));
-        }
-
-        if (isset($_POST['max_participants'])) {
             update_post_meta(
                 $post_id, 
-                'max_participants', 
-                absint($_POST['max_participants'])
+                'tgo_event_date', 
+                $datetime
+            );
+        }
+
+        if (isset($_POST['tgo_event_field'])) {
+            update_post_meta(
+                $post_id, 
+                'tgo_event_field', 
+                intval($_POST['tgo_event_field'])
+            );
+        }
+
+        if (isset($_POST['tgo_event_max_participants'])) {
+            update_post_meta(
+                $post_id, 
+                'tgo_event_max_participants', 
+                intval($_POST['tgo_event_max_participants'])
             );
         }
 
@@ -217,5 +217,31 @@ class Event {
             $allowedRoles = isset($_POST['tgo_allowed_roles']) ? (array) $_POST['tgo_allowed_roles'] : [];
             PlayerRoles::saveAllowedRolesForEvent($post_id, $allowedRoles);
         }
+    }
+
+    /**
+     * Load single event template
+     *
+     * @param string $template Template path
+     * @return string
+     */
+    public function loadSingleTemplate(string $template): string {
+        if (is_singular(self::POST_TYPE)) {
+            $custom_template = $this->getTemplatePath('single-event.php');
+            if (file_exists($custom_template)) {
+                return $custom_template;
+            }
+        }
+        return $template;
+    }
+
+    /**
+     * Get template path
+     *
+     * @param string $template Template name
+     * @return string
+     */
+    protected function getTemplatePath(string $template): string {
+        return plugin_dir_path(dirname(__DIR__)) . 'src/templates/' . $template;
     }
 } 

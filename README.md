@@ -4,7 +4,7 @@ WordPress plugin for organizing airsoft events with participant registration and
 
 ## Description
 
-Tactical Game Organizer is a WordPress plugin designed to help airsoft communities manage their game events. It provides a comprehensive solution for event organization, field management, and player registration.
+Tactical Game Organizer is a WordPress plugin designed to help airsoft communities manage their game events. It provides a comprehensive solution for event organization, field management, and player registration with role-based participation.
 
 ### Features
 
@@ -14,6 +14,8 @@ Tactical Game Organizer is a WordPress plugin designed to help airsoft communiti
     -   Maximum participants limit
     -   Field location assignment
     -   Event details and rules
+    -   Role restrictions per event
+    -   Participant progress tracking
 -   Field management with:
     -   Location information
     -   Field description
@@ -62,6 +64,7 @@ composer install
     - Date and time
     - Maximum participants
     - Select game field
+    - Configure allowed roles
 4. Publish the event
 
 ### Managing Fields
@@ -74,6 +77,20 @@ composer install
     - Photos
 3. Publish the field
 
+### Player Registration
+
+1. Players must be logged in and have the 'Player' role
+2. On the event page, players can:
+    - View current participants
+    - See available roles
+    - Register with their preferred role
+    - View event capacity
+3. The system will:
+    - Remember their last used role
+    - Default to 'Assault' if preferred role is unavailable
+    - Show registration status
+    - Prevent registration if event is full
+
 ## Development
 
 ### Project Structure
@@ -84,8 +101,19 @@ tactical-game-organizer/
 │   ├── PostTypes/
 │   │   ├── Event.php
 │   │   └── Field.php
+│   ├── Users/
+│   │   ├── EventRegistration.php
+│   │   ├── UserFields.php
+│   │   └── Roles.php
+│   ├── Roles/
+│   │   └── PlayerRoles.php
 │   └── Meta/
 │       └── EventMeta.php
+├── assets/
+│   ├── css/
+│   │   └── event-registration.css
+│   └── js/
+│       └── event-registration.js
 ├── tests/
 │   ├── Unit/
 │   │   └── PostTypes/

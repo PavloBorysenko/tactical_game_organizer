@@ -11,6 +11,24 @@ use WP_REST_Response;
 use WP_Error;
 use TacticalGameOrganizer\Roles\PlayerRoles;
 
+// WordPress Core Functions
+use function add_action;
+use function add_filter;
+use function array_diff;
+use function esc_html__;
+use function get_current_user_id;
+use function get_post_meta;
+use function get_post_type;
+use function get_the_ID;
+use function in_array;
+use function is_numeric;
+use function is_user_logged_in;
+use function register_rest_route;
+use function sanitize_text_field;
+use function update_post_meta;
+use function update_user_meta;
+use function wp_get_current_user;
+
 /**
  * Class EventRegistration
  * Handles event registration functionality
@@ -109,7 +127,7 @@ class EventRegistration {
         $event_id = $request->get_param('event_id');
         $participants = \get_post_meta($event_id, 'participants', true) ?: [];
         $current_user_id = \get_current_user_id();
-        $max_participants = \get_post_meta($event_id, 'max_participants', true) ?: 0;
+        $max_participants = \get_post_meta($event_id, 'tgo_event_max_participants', true) ?: 0;
         
         // Get allowed roles for the event
         $allowedRoles = PlayerRoles::getAllowedRolesForEvent($event_id);
@@ -187,7 +205,7 @@ class EventRegistration {
 
         // Check participants count
         $participants = \get_post_meta($event_id, 'participants', true) ?: [];
-        $max_participants = \get_post_meta($event_id, 'max_participants', true) ?: 0;
+        $max_participants = \get_post_meta($event_id, 'tgo_event_max_participants', true) ?: 0;
         
         if ($max_participants > 0 && count($participants) >= $max_participants) {
             return new WP_Error(
@@ -265,7 +283,7 @@ class EventRegistration {
         // Get event data
         $event_id = \get_the_ID();
         $participants = \get_post_meta($event_id, 'participants', true) ?: [];
-        $max_participants = \get_post_meta($event_id, 'max_participants', true) ?: 0;
+        $max_participants = \get_post_meta($event_id, 'tgo_event_max_participants', true) ?: 0;
         $user_id = \get_current_user_id();
         
         echo '<div class="tgo-event-registration-container">';
@@ -327,6 +345,7 @@ class EventRegistration {
         $defaultRole = PlayerRoles::getDefaultRoleForUser($user_id);
         ?>
         <form id="tgo-event-registration" class="tgo-form">
+            <h3><?php \esc_html_e('Game Registration', 'tactical-game-organizer'); ?></h3>
             <input type="hidden" name="event_id" value="<?php echo \esc_attr($event_id); ?>">
 
             <div class="tgo-form-field">

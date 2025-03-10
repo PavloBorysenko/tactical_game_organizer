@@ -1,0 +1,223 @@
+/* Military-themed styles for meta boxes */
+.tgo-meta-box-container,
+#tgo_event_roles {
+    background: #242924;
+    border: 2px solid #2f342f;
+    padding: 20px;
+    border-radius: 5px;
+    color: #ffffff;
+}
+
+/* Field groups */
+.tgo-meta-box-container .field-group,
+#tgo_event_roles .field-group {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #2f342f;
+    border: 1px solid #454945;
+    border-radius: 3px;
+}
+
+/* Labels */
+.tgo-meta-box-container label,
+#tgo_event_roles label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #9cdb4f;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+}
+
+/* Inputs and Selects */
+.tgo-meta-box-container input[type='date'],
+.tgo-meta-box-container input[type='number'],
+.tgo-meta-box-container select,
+#tgo_event_roles select {
+    width: 100%;
+    padding: 8px 12px;
+    background: #454945;
+    border: 1px solid #565d56;
+    color: #ffffff;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Select Options */
+.tgo-meta-box-container select option,
+#tgo_event_roles select option {
+    background: #454945;
+    color: #ffffff;
+    padding: 8px;
+}
+
+.tgo-meta-box-container select option:hover,
+.tgo-meta-box-container select option:focus,
+.tgo-meta-box-container select option:active,
+.tgo-meta-box-container select option:checked,
+#tgo_event_roles select option:hover,
+#tgo_event_roles select option:focus,
+#tgo_event_roles select option:active,
+#tgo_event_roles select option:checked {
+    background: #505550;
+    color: #9cdb4f;
+}
+
+.tgo-meta-box-container input[type='date']:focus,
+.tgo-meta-box-container input[type='number']:focus,
+.tgo-meta-box-container select:focus,
+#tgo_event_roles select:focus {
+    outline: none;
+    border-color: #9cdb4f;
+    box-shadow: 0 0 5px rgba(156, 219, 79, 0.4);
+}
+
+/* Checkboxes */
+#tgo_event_roles input[type='checkbox'] {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    background: #454945;
+    border: 1px solid #565d56;
+    border-radius: 3px;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+#tgo_event_roles input[type='checkbox']:checked {
+    background: #9cdb4f;
+    border-color: #9cdb4f;
+}
+
+#tgo_event_roles input[type='checkbox']:checked::before {
+    content: '✓';
+    position: absolute;
+    color: #242924;
+    font-size: 16px;
+    line-height: 18px;
+    text-align: center;
+    width: 100%;
+}
+
+/* Role List */
+#tgo_event_roles .role-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+}
+
+#tgo_event_roles .role-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    background: #353935;
+    border: 1px solid #454945;
+    border-radius: 3px;
+    transition: all 0.2s ease;
+}
+
+#tgo_event_roles .role-item:hover {
+    background: #404440;
+    border-color: #9cdb4f;
+}
+
+/* Date/Time Container */
+.event-datetime-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.event-datetime {
+    margin: 0;
+}
+
+/* Description Text */
+.tgo-meta-box-container .description,
+#tgo_event_roles .description {
+    display: block;
+    font-size: 11px;
+    color: #a0a5a0;
+    margin-top: 5px;
+    font-style: italic;
+}
+
+/* Required Field Indicator */
+.tgo-meta-box-container label::after {
+    content: '*';
+    color: #ff7043;
+    margin-left: 4px;
+}
+
+/* Hover Effects */
+.tgo-meta-box-container input:hover,
+.tgo-meta-box-container select:hover,
+#tgo_event_roles select:hover {
+    border-color: #9cdb4f;
+    background: #505550;
+}
+
+/* Custom Select Arrow */
+.tgo-meta-box-container select,
+#tgo_event_roles select {
+    appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg fill="%239cdb4f" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    padding-right: 30px;
+}
+
+/* Number Input Arrows */
+.tgo-meta-box-container input[type='number']::-webkit-inner-spin-button,
+.tgo-meta-box-container input[type='number']::-webkit-outer-spin-button {
+    opacity: 1;
+    background: #9cdb4f;
+    border-left: 1px solid #565d56;
+    height: 30px;
+    position: relative;
+    right: 4px;
+}
+
+/* Meta Box Title */
+.postbox-header h2 {
+    color: #9cdb4f !important;
+    text-transform: uppercase;
+    font-size: 14px !important;
+    letter-spacing: 1px;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+}
+
+/* Meta Box Header */
+.postbox {
+    border: none !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+.postbox-header {
+    background: #242924 !important;
+    border-bottom: 2px solid #2f342f !important;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 782px) {
+    .event-datetime-container {
+        grid-template-columns: 1fr;
+    }
+
+    .tgo-meta-box-container input[type='date'],
+    .tgo-meta-box-container input[type='number'],
+    .tgo-meta-box-container select,
+    #tgo_event_roles select {
+        padding: 10px 12px;
+    }
+
+    #tgo_event_roles .role-list {
+        grid-template-columns: 1fr;
+    }
+}

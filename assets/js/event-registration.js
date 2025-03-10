@@ -71,17 +71,29 @@ document.addEventListener('DOMContentLoaded', function () {
                             '</span>';
                     }
                 }
-                html += '</h3><ul>';
+                html += '</h3>';
+                html += '<table><thead><tr>';
+                html +=
+                    '<th>' + (window.tgo_rest.callsign || 'Callsign') + '</th>';
+                html += '<th>' + (window.tgo_rest.role || 'Role') + '</th>';
+                html += '<th>' + (window.tgo_rest.team || 'Team') + '</th>';
+                html += '<th></th>'; // For cancel button
+                html += '</tr></thead><tbody>';
 
                 participants.forEach(function (participant) {
-                    html += '<li class="tgo-participant">';
-                    html += `${participant.callsign} (${participant.role_label}) - ${participant.team}`;
+                    html += '<tr class="tgo-participant">';
+                    html += `<td>${participant.callsign}</td>`;
+                    html += `<td>${participant.role_label}</td>`;
+                    html += `<td>${participant.team}</td>`;
+                    html += '<td>';
                     if (participant.can_cancel) {
                         html += `<button class="tgo-cancel-registration">❌</button>`;
                     }
-                    html += '</li>';
+                    html += '</td>';
+                    html += '</tr>';
                 });
-                html += '</ul>';
+
+                html += '</tbody></table>';
 
                 // If there is a limit on the number of participants, show progress
                 if (maxParticipants > 0) {
