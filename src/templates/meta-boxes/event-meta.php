@@ -7,6 +7,7 @@
  * @var int $event_field
  * @var int $max_participants
  * @var array $fields
+ * @var bool $is_field_owner Indicates if the current user is a field owner
  */
 
 declare(strict_types=1);
@@ -76,14 +77,25 @@ $time_options = generate_time_options('08:00', '22:00');
 
     <div class="field-group">
         <label for="tgo_event_field"><?php \esc_html_e('Game Field', 'tactical-game-organizer'); ?></label>
-        <select id="tgo_event_field" name="tgo_event_field" required>
-            <option value=""><?php \esc_html_e('Select Field', 'tactical-game-organizer'); ?></option>
-            <?php foreach ($fields as $field) : ?>
-                <option value="<?php echo $field->ID; ?>" <?php \selected($event_field, $field->ID); ?>>
-                    <?php echo \esc_html($field->post_title); ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
+        <?php if ($is_field_owner && empty($fields)) : ?>
+            <p class="description">
+                <?php \esc_html_e('You don\'t have any fields. Please create a field first.', 'tactical-game-organizer'); ?>
+            </p>
+        <?php else : ?>
+            <select id="tgo_event_field" name="tgo_event_field" required>
+                <option value=""><?php \esc_html_e('Select Field', 'tactical-game-organizer'); ?></option>
+                <?php foreach ($fields as $field) : ?>
+                    <option value="<?php echo $field->ID; ?>" <?php \selected($event_field, $field->ID); ?>>
+                        <?php echo \esc_html($field->post_title); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            <?php if ($is_field_owner) : ?>
+                <p class="description">
+                    <?php \esc_html_e('Only fields you own are displayed.', 'tactical-game-organizer'); ?>
+                </p>
+            <?php endif; ?>
+        <?php endif; ?>
     </div>
 
     <div class="field-group">

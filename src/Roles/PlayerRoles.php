@@ -17,6 +17,9 @@ class PlayerRoles {
     
     // Define player role name
     public const ROLE_PLAYER = 'tgo_player';
+    
+    // Define field owner role name
+    public const ROLE_FIELD_OWNER = 'tgo_field_owner';
 
     // Define available roles with their labels
     private static $roles = [
@@ -46,24 +49,47 @@ class PlayerRoles {
         \error_log('Tactical Game Organizer: Registering player role');
         
         // Add player role with extended permissions
+        $player_capabilities = [
+            'read' => true,                      // Allow reading
+            'upload_files' => true,              // Allow file uploads
+            'edit_posts' => true,                // Allow editing own posts
+            'publish_posts' => true,             // Allow publishing own posts
+            'edit_published_posts' => true,      // Allow editing published posts
+            'read_private_posts' => true,        // Allow reading private posts
+            'level_0' => true,                   // Basic access level
+        ];
+        
         $result = add_role(
             self::ROLE_PLAYER,
             \esc_html__('Player', 'tactical-game-organizer'),
-            [
-                'read' => true,                      // Allow reading
-                'upload_files' => true,              // Allow file uploads
-                'edit_posts' => true,                // Allow editing own posts
-                'publish_posts' => true,             // Allow publishing own posts
-                'edit_published_posts' => true,      // Allow editing published posts
-                'read_private_posts' => true,        // Allow reading private posts
-                'level_0' => true,                   // Basic access level
-            ]
+            $player_capabilities
         );
 
         if (null !== $result) {
             \error_log('Tactical Game Organizer: Player role registered successfully');
         } else {
             \error_log('Tactical Game Organizer: Failed to register player role or role already exists');
+        }
+        
+        // Add field owner role with all player permissions plus field management capabilities
+        $field_owner_capabilities = array_merge($player_capabilities, [
+            'edit_others_posts' => false,        // Don't allow editing others' posts
+            'edit_others_pages' => false,        // Don't allow editing others' pages
+            'delete_posts' => true,              // Allow deleting own posts
+            'delete_published_posts' => true,    // Allow deleting own published posts
+            'level_1' => true,                   // Higher access level
+        ]);
+        
+        $field_owner_result = add_role(
+            self::ROLE_FIELD_OWNER,
+            \esc_html__('Хозяин поля', 'tactical-game-organizer'),
+            $field_owner_capabilities
+        );
+
+        if (null !== $field_owner_result) {
+            \error_log('Tactical Game Organizer: Field Owner role registered successfully');
+        } else {
+            \error_log('Tactical Game Organizer: Failed to register field owner role or role already exists');
         }
     }
 
@@ -73,6 +99,9 @@ class PlayerRoles {
     public static function removeRoles(): void {
         \error_log('Tactical Game Organizer: Removing player role');
         remove_role(self::ROLE_PLAYER);
+        
+        \error_log('Tactical Game Organizer: Removing field owner role');
+        remove_role(self::ROLE_FIELD_OWNER);
     }
 
     /**

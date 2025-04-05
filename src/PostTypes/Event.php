@@ -17,6 +17,7 @@ use function esc_html__;
 use function esc_html_x;
 use function file_exists;
 use function get_post_meta;
+use function get_post_field;
 use function get_posts;
 use function is_singular;
 use function plugin_dir_path;
@@ -25,6 +26,9 @@ use function sanitize_text_field;
 use function update_post_meta;
 use function wp_nonce_field;
 use function wp_verify_nonce;
+use function wp_get_current_user;
+use function get_current_user_id;
+use function in_array;
 
 // WordPress Constants
 use const DOING_AUTOSAVE;
@@ -133,14 +137,28 @@ class Event extends Template {
     public function renderEventDetailsMetaBox(WP_Post $post): void {
         wp_nonce_field('event_details', 'event_details_nonce');
 
+        $current_user = wp_get_current_user();
+        $is_field_owner = in_array('tgo_field_owner', (array) $current_user->roles);
+        $current_user_id = get_current_user_id();
+        
+        // Получаем поля в зависимости от роли пользователя
+        if ($is_field_owner) {
+            // Хозяин поля видит только свои поля (где он автор)
+            $fields = Field::getFieldsOwnedByUser($current_user_id);
+        } else {
+            // Администраторы видят все поля
+            $fields = get_posts([
+                'post_type' => Field::POST_TYPE,
+                'posts_per_page' => -1,
+            ]);
+        }
+
         $data = [
             'event_date' => get_post_meta($post->ID, 'tgo_event_date', true),
             'event_field' => get_post_meta($post->ID, 'tgo_event_field', true),
             'max_participants' => get_post_meta($post->ID, 'tgo_event_max_participants', true),
-            'fields' => get_posts([
-                'post_type' => Field::POST_TYPE,
-                'posts_per_page' => -1,
-            ]),
+            'fields' => $fields,
+            'is_field_owner' => $is_field_owner,
         ];
 
         $this->renderTemplate('meta-boxes/event-meta.php', $data);
@@ -179,7 +197,21 @@ class Event extends Template {
             return;
         }
 
-        if (!current_user_can('edit_post', $post_id)) {
+        // Проверяем права доступа
+        $current_user = wp_get_current_user();
+        $is_field_owner = in_array('tgo_field_owner', (array) $current_user->roles);
+        $current_user_id = get_current_user_id();
+        
+        // Администраторы могут редактировать любые события
+        $can_edit = current_user_can('edit_post', $post_id);
+        
+        // Хозяин поля может редактировать только свои события
+        if ($is_field_owner && !$can_edit) {
+            $post_author = get_post_field('post_author', $post_id);
+            $can_edit = ($post_author == $current_user_id);
+        }
+        
+        if (!$can_edit) {
             return;
         }
 
@@ -197,10 +229,21 @@ class Event extends Template {
         }
 
         if (isset($_POST['tgo_event_field'])) {
+            $field_id = intval($_POST['tgo_event_field']);
+            
+            // Если пользователь - хозяин поля, проверяем, что выбранное поле принадлежит ему
+            if ($is_field_owner) {
+                $field_author = get_post_field('post_author', $field_id);
+                if ($field_author != $current_user_id) {
+                    // Поле не принадлежит этому пользователю, не сохраняем
+                    return;
+                }
+            }
+            
             update_post_meta(
                 $post_id, 
                 'tgo_event_field', 
-                intval($_POST['tgo_event_field'])
+                $field_id
             );
         }
 

@@ -5,6 +5,8 @@ namespace TacticalGameOrganizer\PostTypes;
 use function add_action;
 use function register_post_type;
 use function esc_html__;
+use function get_posts;
+use function current_user_can;
 
 /**
  * Class Field
@@ -60,10 +62,30 @@ class Field {
             'has_archive'         => true,
             'hierarchical'        => false,
             'menu_position'       => 6,
-            'supports'            => ['title', 'editor', 'thumbnail', 'excerpt'],
+            'supports'            => ['title', 'editor', 'thumbnail', 'excerpt', 'author'],
             'show_in_rest'        => true,
         ];
 
         register_post_type(self::POST_TYPE, $args);
+    }
+    
+    /**
+     * Get fields owned by a specific user
+     * 
+     * @param int $user_id User ID
+     * @return array Array of field post objects
+     */
+    public static function getFieldsOwnedByUser($user_id): array {
+        if (!$user_id) {
+            return [];
+        }
+        
+        $args = [
+            'post_type' => self::POST_TYPE,
+            'posts_per_page' => -1,
+            'author' => $user_id
+        ];
+        
+        return get_posts($args);
     }
 } 

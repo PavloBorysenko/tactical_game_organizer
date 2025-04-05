@@ -179,10 +179,10 @@ class EventRegistration {
         }
 
         $user = \wp_get_current_user();
-        if (!\in_array('tgo_player', (array) $user->roles)) {
+        if (!\in_array('tgo_player', (array) $user->roles) && !\in_array('tgo_field_owner', (array) $user->roles)) {
             return new WP_Error(
                 'rest_forbidden',
-                \esc_html__('Only players can register for events.', 'tactical-game-organizer'),
+                \esc_html__('Only players and field owners can register for events.', 'tactical-game-organizer'),
                 ['status' => 403]
             );
         }
@@ -284,8 +284,9 @@ class EventRegistration {
         $event_id = \get_the_ID();
         $participants = \get_post_meta($event_id, 'participants', true) ?: [];
         $max_participants = \get_post_meta($event_id, 'tgo_event_max_participants', true) ?: 0;
+
         $user_id = \get_current_user_id();
-        
+
         echo '<div class="tgo-event-registration-container">';
 
         // Check if user can register
@@ -299,10 +300,10 @@ class EventRegistration {
         }
 
         $user = \wp_get_current_user();
-        if (!\in_array('tgo_player', (array) $user->roles)) {
+        if (!\in_array('tgo_player', (array) $user->roles) && !\in_array('tgo_field_owner', (array) $user->roles)) {
             $this->renderParticipantList($event_id);
             echo '<div class="tgo-form-container">';
-            echo \esc_html__('Only players can register for events.', 'tactical-game-organizer');
+            echo \esc_html__('Only players and field owners can register for events.', 'tactical-game-organizer');
             echo '</div>';
             echo '</div>';
             return \ob_get_clean();
